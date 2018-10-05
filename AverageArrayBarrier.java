@@ -1,5 +1,7 @@
 //Thread local random
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+
 public class AverageArrayBarrier {
     private int[] oldArray;
     private int[] newArray;
@@ -14,36 +16,36 @@ public class AverageArrayBarrier {
         barrier = new CyclicBarrier(numThreads);
         thread = new Thread[numThreads];
     }
+
     public class NewElement implements Runnable{
         private int index;
+
         public NewElement(int index) {
             this.index = index;
         }
+
         @Override
         public void run() {
-            newArray[index - 1] = avg(oldArray[index - 1], oldArray[index + 1]);
+            try {
+                newArray[index - 1] = avg(oldArray[index - 1], oldArray[index + 1]);
+                try {
+                    // All threads must wait for all numThreads to catch up
+                    barrier.await();
+                    Thread.sleep(1000);
+                } catch (BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+                oldArray[index] = newArray[index - 1];
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
+
     public void averageNeighbors() {
         for (int i = 0, j = 1; i < thread.length; i++, j++) {
             thread[i] = new Thread(new NewElement(j));
-        }
-
-        for (int i = 0; i < thread.length; i++) {
             thread[i].start();
-        }
-
-        for (int i = 0; i < thread.length; i++) {
-            try {
-                thread[i].join();
-            }
-            catch (InterruptedException e) {
-                System.out.println("Thread " + Thread.currentThread().getId() + ": INTERRUPTED");
-            }
-        }
-
-        for (int i = 0; i < thread.length; i++) {
-            oldArray[i + 1] = newArray[i];
         }
     }
 
@@ -53,6 +55,7 @@ public class AverageArrayBarrier {
         }
         System.out.println();
     }
+
     public void showOldArray() {
         for (int i = 0; i < oldArray.length; i++) {
             System.out.print(oldArray[i] + " ");
@@ -64,12 +67,21 @@ public class AverageArrayBarrier {
         return (a + b) / 2;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException{
         int[] oldArr = {11, 31, 9, 32, 67, 29, 61, 7, 24, 41};
+
         AverageArrayBarrier test = new AverageArrayBarrier(oldArr);
+
         test.showOldArray();
+
         test.averageNeighbors();
+
+        // Main thread sometimes prints oldArray sooner than the Barrier is released
+        // Sleep to slow it down
+        Thread.sleep(10000);
+
         test.showNewArray();
         test.showOldArray();
+
     }
 }
