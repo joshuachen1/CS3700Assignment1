@@ -50,6 +50,7 @@ public class AverageArrayPhasers {
                     replacement = avg.apply(oldArray[index - 1], oldArray[index + 1]);
 
                     // All threads must wait for all numThreads threads to catch up
+                    // Phaser acting like a barrier
                     ph.arriveAndAwaitAdvance();
 
                     Thread.sleep(sleep);
