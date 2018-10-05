@@ -8,13 +8,14 @@ public class AverageArrayPhasers {
         final int numThreads = oldArr.length - 2;
         int sleepTime = 1000;
 
+        // Phase 0
         int phaseCount = phaser.getPhase();
         System.out.println("Current Phase: " + phaseCount);
 
         printArray(oldArr);
 
         for (int i = 0; i < numThreads; i++, sleepTime += 1000) {
-            new AverageArrayPhasers().newElement(phaser, oldArr, i + 1, sleepTime);
+            new AverageArrayPhasers().newElement(phaser, oldArr, i + 1);
         }
 
         Thread.sleep(sleepTime);
@@ -32,7 +33,7 @@ public class AverageArrayPhasers {
         System.out.println();
     }
 
-    private void newElement(Phaser ph, int[] oldArray, int index, int sleep) {
+    private void newElement(Phaser ph, int[] oldArray, int index) {
         // Thread registers itself to the phaser
         ph.register();
 
@@ -44,23 +45,20 @@ public class AverageArrayPhasers {
                 BinaryOperator<Integer> avg = (Integer a, Integer b) -> (a + b) / 2;
                 int replacement;
 
-                try {
-                    System.out.println("++" + Thread.currentThread().getName() + " has arrived.");
+                replacement = avg.apply(oldArray[index - 1], oldArray[index + 1]);
 
-                    replacement = avg.apply(oldArray[index - 1], oldArray[index + 1]);
+                // Notify completion of Phase 0
+                int currentPhase = ph.arrive();
 
-                    // All threads must wait for all numThreads threads to catch up
-                    // Phaser acting like a barrier
-                    ph.arriveAndAwaitAdvance();
+                // Local work while waiting to advance
+                System.out.println("++" + Thread.currentThread().getName() + " has arrived.");
 
-                    Thread.sleep(sleep);
+                // All threads must wait until everyone is done with Phase 0
+                ph.awaitAdvance(currentPhase);
 
-                    System.out.println("--" + Thread.currentThread().getName() + " has left.");
-                    oldArray[index] = replacement;
+                System.out.println("--" + Thread.currentThread().getName() + " has left.");
+                oldArray[index] = replacement;
 
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
             }
         }).start();
     }
