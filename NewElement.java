@@ -19,6 +19,7 @@ public class NewElement implements Runnable{
         // Lambda expression finds the average between two numbers: a and b
         BinaryOperator<Integer> avg = (Integer a, Integer b) -> (a + b) / 2;
         int replacement;
+        
         try {
             replacement = avg.apply(oldArray[index - 1], oldArray[index + 1]);
             try {
@@ -31,10 +32,6 @@ public class NewElement implements Runnable{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    private int avg (int a, int b) {
-        return (a + b) / 2;
     }
 }
 
