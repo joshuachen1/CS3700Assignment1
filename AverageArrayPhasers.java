@@ -13,11 +13,11 @@ public class AverageArrayPhasers {
 
         printArray(oldArr);
 
-        new AverageArrayPhasers().newElement(phaser, oldArr, 1, 2000);
-        new AverageArrayPhasers().newElement(phaser, oldArr, 2, 4000);
-        new AverageArrayPhasers().newElement(phaser, oldArr, 3, 6000);
+        for (int i = 0; i < numThreads; i++, sleepTime += 1000) {
+            new AverageArrayPhasers().newElement(phaser, oldArr, i + 1, sleepTime);
+        }
 
-        Thread.sleep();
+        Thread.sleep(sleepTime);
 
         phaseCount = phaser.getPhase();
         System.out.println("Current Phase: " + phaseCount);
